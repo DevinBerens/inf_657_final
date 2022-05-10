@@ -13,6 +13,7 @@ import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import { imagePath, colors } from "../globals/utils";
 import { findIndex } from "lodash";
 import MoviePopover from "./moviePopover";
+import SearchPopover from "../search/searchPopover";
 
 let Home = (props) => {
   const {
@@ -26,6 +27,7 @@ let Home = (props) => {
     closePopover,
     getMore,
     route,
+    showSearch,
   } = props;
 
   return (
@@ -37,13 +39,23 @@ let Home = (props) => {
           ["Popular Movies", ...(popularMovies || [])],
           ["Upcoming Movies", ...(upcomingMovies || [])],
         ].map((category, index) => (
-          <View key={index} style={styles.categoryWrapper}>
-            {((category[0] === "Favorite Movies" &&
-              !["Popular", "Upcoming"].includes(route.name)) ||
-              category.length > 1) && (
-              <Text style={styles.categoryTitle}>{category[0]}</Text>
-            )}
-            {category.length > 1 ? (
+          <View
+            key={index}
+            style={[
+              styles.categoryWrapper,
+              { minHeight: route.name === "Favorite Movies" && 1200 },
+            ]}
+          >
+            {category[0] === "Favorite Movies" &&
+            ["Popular", "Upcoming"].includes(route.name)
+              ? null
+              : (category.length > 1 || category[0] === "Favorite Movies") && (
+                  <Text style={styles.categoryTitle}>{category[0]}</Text>
+                )}
+            {category[0] === "Favorite Movies" &&
+            ["Popular", "Upcoming"].includes(
+              route.name
+            ) ? null : category.length > 1 ? (
               <View style={styles.movieWrapper}>
                 {category.map(
                   (movie, i) =>
@@ -80,6 +92,14 @@ let Home = (props) => {
                       </TouchableOpacity>
                     )
                 )}
+                {category[0] !== "Favorite Movies" && (
+                  <Text
+                    style={styles.showMore}
+                    onPress={getMore.bind(this, category[0])}
+                  >
+                    Show More...
+                  </Text>
+                )}
               </View>
             ) : category[0] === "Favorite Movies" &&
               !["Popular", "Upcoming"].includes(route.name) ? (
@@ -87,15 +107,16 @@ let Home = (props) => {
             ) : null}
           </View>
         ))}
-        {moviePopover && (
-          <MoviePopover
-            closePopover={closePopover}
-            clickedMovie={clickedMovie}
-            toggleFavorite={toggleFavorite}
-            favoriteMovies={favoriteMovies}
-          />
-        )}
       </ScrollView>
+      {moviePopover && (
+        <MoviePopover
+          closePopover={closePopover}
+          clickedMovie={clickedMovie}
+          toggleFavorite={toggleFavorite}
+          favoriteMovies={favoriteMovies}
+        />
+      )}
+      {showSearch && <SearchPopover {...props} />}
     </SafeAreaView>
   );
 };
@@ -154,6 +175,10 @@ const styles = StyleSheet.create({
   movieRatingIcon: {
     color: colors.yellow,
     marginRight: 5,
+  },
+  showMore: {
+    alignSelf: "flex-end",
+    marginBottom: 100,
   },
   noneFound: {
     marginLeft: 15,

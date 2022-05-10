@@ -1,18 +1,25 @@
 import React from "react";
-import { View, Image, Button, Text, StyleSheet } from "react-native";
+import {
+  View,
+  Image,
+  Text,
+  StyleSheet,
+  Linking,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+} from "react-native";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
 import { findIndex } from "lodash";
 import { colors, imagePath } from "../globals/utils";
-import { TouchableOpacity } from "react-native-web";
 import Feather from "react-native-vector-icons/Feather";
 
 let MoviePopover = (props) => {
   const { closePopover, clickedMovie, toggleFavorite, favoriteMovies } = props;
-  console.log(clickedMovie);
 
   return (
-    <View style={styles.moviePopover}>
-      <View style={styles.popoverWrapper}>
+    <SafeAreaView style={styles.moviePopover}>
+      <ScrollView style={styles.popoverWrapper}>
         <Feather style={styles.closePopover} onPress={closePopover} name="x" />
         <View style={styles.posterWrapper}>
           <Image
@@ -23,7 +30,10 @@ let MoviePopover = (props) => {
         <View style={styles.popoverBody}>
           <Text style={styles.movieTitle}>{clickedMovie.title}</Text>
           <View style={styles.popoverFooter}>
-            <TouchableOpacity style={styles.footerButton}>
+            <TouchableOpacity
+              style={styles.footerButton}
+              onPress={toggleFavorite.bind(this, clickedMovie)}
+            >
               <FontAwesomeIcon
                 style={styles.favoritesHeart}
                 name={
@@ -41,11 +51,14 @@ let MoviePopover = (props) => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.footerButton}>
-              <a
+              <Text
                 style={{ textDecorationLine: "none" }}
-                href={`https://www.youtube.com/watch?v=${clickedMovie.trailer?.key}`}
-                target="_blank"
-                rel="noreferrer"
+                onPress={() =>
+                  Linking.openURL(
+                    `https://www.youtube.com/watch?v=${clickedMovie.trailer?.key}`,
+                    "_blank"
+                  )
+                }
               >
                 <Text
                   style={{
@@ -54,31 +67,35 @@ let MoviePopover = (props) => {
                 >
                   Watch Trailer
                 </Text>
-              </a>
+              </Text>
             </TouchableOpacity>
           </View>
           <Text style={styles.ft18}>
-            <b>Directed By:</b> {clickedMovie.director?.name}
+            <Text style={{ fontWeight: "bold" }}>Directed By:</Text>{" "}
+            {clickedMovie.director?.name}
           </Text>
           <Text style={styles.ft18}>
-            <b>Genre:</b>{" "}
+            <Text style={{ fontWeight: "bold" }}>Genre:</Text>{" "}
             {(clickedMovie.genres || []).map(
               (genre, i) =>
                 `${genre.name}${i + 1 < clickedMovie.genres.length ? ", " : ""}`
             )}
           </Text>
           <Text style={styles.ft18}>
-            <b>Rating:</b> {clickedMovie.vote_average}
+            <Text style={{ fontWeight: "bold" }}>Rating:</Text>{" "}
+            {clickedMovie.vote_average}
           </Text>
           <Text style={styles.ft18}>
-            <b>Release Date:</b> {clickedMovie.release_date}
+            <Text style={{ fontWeight: "bold" }}>Release Date:</Text>{" "}
+            {clickedMovie.release_date}
           </Text>
           <Text style={styles.ft18}>
-            <b>Overview:</b> {clickedMovie.overview}
+            <Text style={{ fontWeight: "bold" }}>Overview:</Text>{" "}
+            {clickedMovie.overview}
           </Text>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -87,19 +104,20 @@ export default MoviePopover;
 const styles = StyleSheet.create({
   moviePopover: {
     backgroundColor: colors.background,
-    //width: window.innerWidth,
-    //height: window.innerHeight,
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
+    paddingBottom: 50,
     zIndex: 10,
-    position: "fixed",
+    minHeight: 800,
+    position: "absolute",
     display: "flex",
-    overflow: "auto",
+    overflow: "hidden",
   },
   popoverWrapper: {
-    padding: 25,
+    paddingLeft: 25,
+    paddingRight: 25,
     display: "flex",
     flexDirection: "column",
     flex: 1,
@@ -127,13 +145,12 @@ const styles = StyleSheet.create({
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    marginTop: 10,
     paddingBottom: 10,
   },
   movieTitle: {
     flexWrap: "wrap",
-    fontSize: 16,
-    marginTop: 5,
+    fontSize: 20,
+    fontWeight: "600",
     marginBottom: 5,
   },
   popoverFooter: {
@@ -172,6 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 10,
     paddingTop: 10,
-    borderTop: "1px solid black",
+    borderTopWidth: 1,
+    borderTopColor: "black",
   },
 });

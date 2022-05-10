@@ -3,9 +3,7 @@ import { DefaultTheme, NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { colors, apiKey, moviePath } from "./components/globals/utils";
 import Home from "./components/home";
-import Favorites from "./components/favorites";
-import Popular from "./components/popular";
-import Upcoming from "./components/upcoming";
+import Search from "./components/search";
 import Icon from "./components/globals/icon";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { find, findIndex } from "lodash";
@@ -24,6 +22,15 @@ export default function App() {
   let [upcomingMovies, setUpcomingMovies] = useState([]);
   let [moviePopover, setMoviePopover] = useState(false);
   let [clickedMovie, setClickedMovie] = useState({});
+  let [showSearch, setShowSearch] = useState(false);
+  let [isSearch, setIsSearch] = useState(false);
+  let [searchResults, setSearchResults] = useState([]);
+
+  let toggleSearch = useCallback(() => {
+    setShowSearch(!showSearch);
+    setSearchResults([]);
+    setIsSearch(false);
+  }, [showSearch]);
 
   let movieClick = useCallback((movie) => {
     let urls = [
@@ -36,6 +43,7 @@ export default function App() {
         Promise.all(responses.map((response) => response.json()))
       )
       .then((data) => {
+        console.log("movie click data");
         let trailers = [];
         find(data[2].results, (item) => {
           if (item.type === "Trailer") {
@@ -50,8 +58,8 @@ export default function App() {
           director: director,
           trailer: trailers[0],
         };
-        setMoviePopover(true);
         setClickedMovie(movieDetails);
+        setMoviePopover(true);
       })
       .catch((err) => {
         console.log(err, "error calling backend API");
@@ -90,7 +98,7 @@ export default function App() {
       let page = 2;
       if (movieCategory === "popular") {
         page = popularMovies.length / 20 + 1;
-      } else if (category === "upcoming") {
+      } else if (movieCategory === "upcoming") {
         page = upcomingMovies.length / 20 + 1;
       }
       fetch(
@@ -98,7 +106,6 @@ export default function App() {
       )
         .then((response) => response.json())
         .then(async (data) => {
-          console.log(data, "getMore");
           if (movieCategory === "popular") {
             await AsyncStorage.removeItem("popularMovies");
             await AsyncStorage.setItem(
@@ -106,7 +113,7 @@ export default function App() {
               JSON.stringify([...popularMovies, ...data.results])
             );
             setPopularMovies([...popularMovies, ...data.results]);
-          } else if (movieCategory === "upcomingMovies") {
+          } else if (movieCategory === "upcoming") {
             await AsyncStorage.removeItem("upcomingMovies");
             await AsyncStorage.setItem(
               "upcomingMovies",
@@ -163,6 +170,22 @@ export default function App() {
     }
   }, [getMovies]);
 
+  let body = {
+    favoriteMovies,
+    movieClick,
+    moviePopover,
+    clickedMovie,
+    toggleFavorite,
+    closePopover,
+    getMore,
+    showSearch,
+    setShowSearch,
+    isSearch,
+    setIsSearch,
+    searchResults,
+    setSearchResults,
+  };
+
   return (
     <NavigationContainer theme={myTheme} ref={navigationRef}>
       <Stack.Navigator
@@ -180,73 +203,30 @@ export default function App() {
               styles={{ borderRadius: null }}
             />
           ),
-          headerRight: () => (
-            <Icon
-              name="magnify"
-              backgroundColor={colors.primary}
-              styles={{
-                borderRadius: null,
-              }}
-            />
-          ),
+          headerRight: () => <Search toggleSearch={toggleSearch} />,
         }}
       >
         <Stack.Screen name="Home">
           {(props) => (
             <Home
               popularMovies={popularMovies}
-              favoriteMovies={favoriteMovies}
               upcomingMovies={upcomingMovies}
-              movieClick={movieClick}
-              moviePopover={moviePopover}
-              clickedMovie={clickedMovie}
-              toggleFavorite={toggleFavorite}
-              closePopover={closePopover}
-              getMore={getMore}
+              {...body}
               {...props}
             />
           )}
         </Stack.Screen>
         <Stack.Screen name="Favorites">
-          {(props) => (
-            <Home
-              favoriteMovies={favoriteMovies}
-              movieClick={movieClick}
-              moviePopover={moviePopover}
-              clickedMovie={clickedMovie}
-              toggleFavorite={toggleFavorite}
-              closePopover={closePopover}
-              getMore={getMore}
-              {...props}
-            />
-          )}
+          {(props) => <Home {...body} {...props} />}
         </Stack.Screen>
         <Stack.Screen name="Popular">
           {(props) => (
-            <Home
-              popularMovies={popularMovies}
-              movieClick={movieClick}
-              moviePopover={moviePopover}
-              clickedMovie={clickedMovie}
-              toggleFavorite={toggleFavorite}
-              closePopover={closePopover}
-              getMore={getMore}
-              {...props}
-            />
+            <Home popularMovies={popularMovies} {...body} {...props} />
           )}
         </Stack.Screen>
         <Stack.Screen name="Upcoming">
           {(props) => (
-            <Home
-              upcomingMovies={upcomingMovies}
-              movieClick={movieClick}
-              moviePopover={moviePopover}
-              clickedMovie={clickedMovie}
-              toggleFavorite={toggleFavorite}
-              closePopover={closePopover}
-              getMore={getMore}
-              {...props}
-            />
+            <Home upcomingMovies={upcomingMovies} {...body} {...props} />
           )}
         </Stack.Screen>
       </Stack.Navigator>
